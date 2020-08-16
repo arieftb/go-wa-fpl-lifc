@@ -3,13 +3,24 @@ package main
 import (
 	"encoding/gob"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
+
+	"encoding/json"
+	"net/http"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
+
 	"github.com/Rhymen/go-whatsapp/binary/proto"
+
+	"golang.org/x/net/context"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/sheets/v4"
 
 	qrcodeTerminal "github.com/Baozisoftware/qrcode-terminal-go"
 	whatsapp "github.com/Rhymen/go-whatsapp"
@@ -37,8 +48,7 @@ func (wh *waHandler) HandleError(err error) {
 }
 
 func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
-	fmt.Printf("time:\t%v\nmesId:\t%v\nremoteId:\t%v\nquoteMessageId:\t%v\nsenderId:\t%v\nmessage:\t%v\n", message.Info.Timestamp, message.Info.Id, message.Info.RemoteJid, message.ContextInfo.QuotedMessageID, message.Info.SenderJid, message.Text)
-
+	// fmt.Printf("time:\t%v\nmesId:\t%v\nremoteId:\t%v\nquoteMessageId:\t%v\nsenderId:\t%v\nmessage:\t%v\n", message.Info.Timestamp, message.Info.Id, message.Info.RemoteJid, message.ContextInfo.QuotedMessageID, message.Info.SenderJid, message.Text)
 	if !strings.Contains(strings.ToLower(message.Text), "#fpllifc#") || strings.Contains(strings.ToLower(message.Text), "<") || strings.Contains(strings.ToLower(message.Text), ">") || message.Info.Timestamp < wh.startTime {
 		return
 	}
@@ -46,17 +56,22 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 	code := strings.Split(message.Text, "#")
 
 	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") {
-		sendMessage := registerFPL(code, message)
-		if _, err := wh.wac.Send(sendMessage); err != nil {
-			fmt.Fprintf(os.Stderr, "error sending message: %v\n", err)
-		}
-
+		sendMessages := registerFPL(code, message)
+		sendMessage(sendMessages, wh.wac)
 	} else {
 		return
 	}
 }
 
+func sendMessage(sendMessage whatsapp.TextMessage, wac *whatsapp.Conn) {
+	if _, err := wac.Send(sendMessage); err != nil {
+		fmt.Fprintf(os.Stderr, "error sending message: %v\n", err)
+	}
+}
+
 func registerFPL(code []string, message whatsapp.TextMessage) whatsapp.TextMessage {
+	isSent := sendDataToSpreadSheet(code, time.Now().Format("01-02-2006 15:04:05"))
+
 	previousMessage := message.Text
 	quotedMessage := proto.Message{
 		Conversation: &previousMessage,
@@ -68,15 +83,161 @@ func registerFPL(code []string, message whatsapp.TextMessage) whatsapp.TextMessa
 		Participant:     message.Info.RemoteJid,
 	}
 
-	msg := whatsapp.TextMessage{
-		Info: whatsapp.MessageInfo{
-			RemoteJid: message.Info.RemoteJid,
-		},
-		ContextInfo: ContextInfo,
-		Text:        "Registered\nOfficial LIFC Classic League Team: " + code[3] + ",\nOffcial LIFC H2H League Team: " + code[4] + ",\nFrom: " + code[2] + "\n\n\nThis message sent by LIFCiaWA",
+	var msg whatsapp.TextMessage
+
+	if !isSent {
+		msg = whatsapp.TextMessage{
+			Info: whatsapp.MessageInfo{
+				RemoteJid: message.Info.RemoteJid,
+			},
+			ContextInfo: ContextInfo,
+			Text: "UNSUCCESSFUL REGISTERED\nOfficial LIFC Classic League Team: " +
+				code[3] + ",\nOffcial LIFC H2H League Team: " +
+				code[4] + ",\nFrom: " +
+				code[2] + "\n\n\nThis message sent by LIFCia" +
+				"\n\n Please contact the owner of LIFCia",
+		}
+	} else {
+		msg = whatsapp.TextMessage{
+			Info: whatsapp.MessageInfo{
+				RemoteJid: message.Info.RemoteJid,
+			},
+			ContextInfo: ContextInfo,
+			Text: "Registered\nOfficial LIFC Classic League Team: " +
+				code[3] + ",\nOffcial LIFC H2H League Team: " +
+				code[4] + ",\nFrom: " +
+				code[2] + "\n\n\nThis message sent by LIFCia",
+		}
 	}
 
 	return msg
+}
+
+func sendDataToSpreadSheet(code []string, timestamp string) bool {
+	b, err := ioutil.ReadFile("credentials.json")
+	if err != nil {
+		println(err)
+		return false
+	}
+
+	// If modifying these scopes, delete your previously saved token.json.
+	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
+	if err != nil {
+		println(err)
+		return false
+	}
+	client := getClient(config)
+
+	srv, err := sheets.New(client)
+	if err != nil {
+		println(err)
+		return false
+	}
+
+	// Prints the names and majors of students in a sample spreadsheet:
+	// https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
+	spreadsheetID := "14jSm_V2HakndwIZDDgXd3AjA5iD5qM2BVzOmNQvyyfk"
+	i := 0
+	readRange := "Sheet1!A1:A"
+	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
+	if err != nil {
+		println(err)
+		return false
+	}
+
+	if len(resp.Values) == 0 {
+		fmt.Println("No data found.")
+	} else {
+		for _, row := range resp.Values {
+			if row[0] == "" {
+				// fmt.Printf("%d\n", i)
+				break
+			} else {
+				i++
+				// fmt.Printf("%d\n", i)
+				// fmt.Printf("%s\n", row[0])
+			}
+		}
+	}
+
+	rangeInputData := "Sheet1!A" + strconv.Itoa(i+1) + ":D" + strconv.Itoa(i+1)
+	values := [][]interface{}{{timestamp, "'" + code[2], code[3], code[4]}}
+
+	rb := &sheets.BatchUpdateValuesRequest{
+		ValueInputOption: "USER_ENTERED",
+	}
+	rb.Data = append(rb.Data, &sheets.ValueRange{
+		Range:  rangeInputData,
+		Values: values,
+	})
+	_, err = srv.Spreadsheets.Values.BatchUpdate(spreadsheetID, rb).Context(context.Background()).Do()
+	if err != nil {
+		println(err)
+		return false
+	}
+	fmt.Println("Done.")
+	return true
+
+}
+
+// Retrieve a token, saves the token, then returns the generated client.
+func getClient(config *oauth2.Config) *http.Client {
+	// The file token.json stores the user's access and refresh tokens, and is
+	// created automatically when the authorization flow completes for the first
+	// time.
+	tokFile := "token.json"
+	tok, err := tokenFromFile(tokFile)
+	if err != nil {
+		tok = getTokenFromWeb(config)
+		saveToken(tokFile, tok)
+	}
+	return config.Client(context.Background(), tok)
+}
+
+func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
+	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+	fmt.Printf("Go to the following link in your browser then type the "+
+		"authorization code: \n%v\n", authURL)
+
+	var authCode string
+	if _, err := fmt.Scan(&authCode); err != nil {
+		log.Fatalf("Unable to read authorization code: %v", err)
+	}
+
+	tok, err := config.Exchange(context.TODO(), authCode)
+	if err != nil {
+		log.Fatalf("Unable to retrieve token from web: %v", err)
+	}
+	return tok
+}
+
+// Retrieves a token from a local file.
+func tokenFromFile(file string) (*oauth2.Token, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	tok := &oauth2.Token{}
+	err = json.NewDecoder(f).Decode(tok)
+	return tok, err
+}
+
+// Saves a token to a file path.
+func saveToken(path string, token *oauth2.Token) {
+	fmt.Printf("Saving credential file to: %s\n", path)
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		log.Fatalf("Unable to cache oauth token: %v", err)
+	}
+	defer f.Close()
+	json.NewEncoder(f).Encode(token)
+}
+
+func checkError(err error) {
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 func main() {
