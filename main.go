@@ -48,6 +48,7 @@ func (wh *waHandler) HandleError(err error) {
 }
 
 func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
+	var sendMessages whatsapp.TextMessage
 	// fmt.Printf("time:\t%v\nmesId:\t%v\nremoteId:\t%v\nquoteMessageId:\t%v\nsenderId:\t%v\nmessage:\t%v\n", message.Info.Timestamp, message.Info.Id, message.Info.RemoteJid, message.ContextInfo.QuotedMessageID, message.Info.SenderJid, message.Text)
 	if !strings.Contains(strings.ToLower(message.Text), "#fpllifc#") || strings.Contains(strings.ToLower(message.Text), "<") || strings.Contains(strings.ToLower(message.Text), ">") || message.Info.Timestamp < wh.startTime {
 		return
@@ -55,12 +56,49 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 
 	code := strings.Split(message.Text, "#")
 
+	// if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") && (strings.Contains(strings.ToLower(message.Text), "<") || strings.Contains(strings.ToLower(message.Text), ">")) {
+	// 	sendMessages = getErrorMessage(1, message)
+	// 	return
+	// }
+
 	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") {
-		sendMessages := registerFPL(code, message)
+		sendMessages = registerFPL(code, message)
 		sendMessage(sendMessages, wh.wac)
 	} else {
 		return
 	}
+}
+
+func getErrorMessage(code int, message whatsapp.TextMessage) whatsapp.TextMessage {
+	var mes string
+
+	switch errorCode := code; errorCode {
+	case 1:
+		mes = "Kesalahan Format Penulisan Pendaftaran. Mohon Ulangi."
+	}
+
+	previousMessage := message.Text
+	quotedMessage := proto.Message{
+		Conversation: &previousMessage,
+	}
+
+	ContextInfo := whatsapp.ContextInfo{
+		QuotedMessage:   &quotedMessage,
+		QuotedMessageID: message.Info.Id,
+		Participant:     message.Info.RemoteJid,
+	}
+
+	var msg whatsapp.TextMessage
+
+	msg = whatsapp.TextMessage{
+		Info: whatsapp.MessageInfo{
+			RemoteJid: message.Info.RemoteJid,
+		},
+		ContextInfo: ContextInfo,
+		Text:        mes + "\n\nThis message sent by LIFCia",
+	}
+
+	return msg
 }
 
 func sendMessage(sendMessage whatsapp.TextMessage, wac *whatsapp.Conn) {
@@ -92,10 +130,10 @@ func registerFPL(code []string, message whatsapp.TextMessage) whatsapp.TextMessa
 			},
 			ContextInfo: ContextInfo,
 			Text: "UNSUCCESSFUL REGISTERED\nOfficial LIFC Classic League Team: " +
-				code[3] + ",\nOffcial LIFC H2H League Team: " +
+				code[3] + ",\nOfficial LIFC H2H League Team: " +
 				code[4] + ",\nFrom: " +
-				code[2] + "\n\n\nThis message sent by LIFCia" +
-				"\n\n Please contact the owner of LIFCia",
+				code[2] + "\n\nThis message sent by LIFCia" +
+				"\nPlease contact the owner of LIFCia",
 		}
 	} else {
 		msg = whatsapp.TextMessage{
@@ -104,9 +142,9 @@ func registerFPL(code []string, message whatsapp.TextMessage) whatsapp.TextMessa
 			},
 			ContextInfo: ContextInfo,
 			Text: "Registered\nOfficial LIFC Classic League Team: " +
-				code[3] + ",\nOffcial LIFC H2H League Team: " +
+				code[3] + ",\nOfficial LIFC H2H League Team: " +
 				code[4] + ",\nFrom: " +
-				code[2] + "\n\n\nThis message sent by LIFCia",
+				code[2] + "\n\nThis message sent by LIFCia",
 		}
 	}
 
@@ -250,6 +288,7 @@ func main() {
 	//Add handler
 	wac.AddHandler(&waHandler{wac, uint64(time.Now().Unix())})
 
+	// wac.SetClientVersion(2, 2021, 4)
 	//login or restore
 	if err := login(wac); err != nil {
 		log.Fatalf("error logging in: %v\n", err)
