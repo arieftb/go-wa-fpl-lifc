@@ -66,6 +66,15 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") {
 		messageSent := registerFPLV2(code)
 		sendMessageV2(message, messageSent, wh.wac, nil)
+	} else if len(code) == 3 && strings.EqualFold(code[0], "CHECK") && strings.EqualFold(code[1], "FPLLIFC") {
+		messageSent := checkRegisterFPL(code[2])
+
+		fmt.Println(messageSent)
+		if messageSent == "" {
+			return
+		}
+
+		sendMessageV2(message, messageSent, wh.wac, nil)
 	} else {
 		return
 	}
@@ -118,6 +127,91 @@ func sendMessageV2(messageReceived whatsapp.TextMessage, messageSent string, wac
 	}
 }
 
+func checkRegisterFPL(phone string) string {
+	var msg string
+	isRegistered, row, err := isRegisteredInSheet(phone)
+	if err != nil {
+		fmt.Println(err)
+		return msg
+	}
+
+	if isRegistered {
+		msg = "Anda telah terdaftar, \n" +
+			"\nOfficial LIFC Classic League : " + row[2].(string) +
+			"\nOfficial LIFC H2H League : " + row[3].(string) +
+			"\nWA Number : " + row[1].(string) +
+			"\n\n\nThis message sent by LIFCia"
+	} else if !isRegistered && err == nil {
+		msg = "Anda belum terdaftar, silahkan lakukan pendaftaran dengan format seperti yang ada di deskripsi grup ini. \n\nThis message sent by LIFCia"
+	}
+
+	return msg
+}
+
+func isRegisteredInSheet(phone string) (bool, []interface{}, error) {
+	var isRegistered = false
+	var error error
+
+	b, err := ioutil.ReadFile("credentials.json")
+	if err != nil {
+		error = err
+		fmt.Println(err)
+		return isRegistered, nil, error
+		// return false
+	}
+
+	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
+	if err != nil {
+		error = err
+		fmt.Println(err)
+		return isRegistered, nil, error
+		// return false
+	}
+	client := getClient(config)
+
+	srv, err := sheets.New(client)
+	if err != nil {
+		error = err
+		fmt.Println(err)
+		return isRegistered, nil, error
+		// return false
+	}
+
+	spreadsheetID := "1hxjwncIybtnIrDUbd3_NL6_6MdvaDC1L58gBWdux9sY"
+	i := 0
+	readRange := "Sheet1!A1:D"
+	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
+	if err != nil {
+		error = err
+		fmt.Println(err)
+		return isRegistered, nil, error
+		// return false
+	}
+
+	var rowData []interface{}
+
+	if len(resp.Values) == 0 {
+		fmt.Println("No data found.")
+	} else {
+		for _, row := range resp.Values {
+			fmt.Println(row[1])
+			if row[1] == phone {
+				isRegistered = true
+				rowData = row
+				break
+			} else {
+				if row[0] == "" {
+					break
+				} else {
+					i++
+				}
+			}
+		}
+	}
+
+	return isRegistered, rowData, nil
+}
+
 func registerFPLV2(code []string) string {
 	var msg string
 	isSent := sendDataToSpreadSheet(code, time.Now().Format("01-02-2006 15:04:05"))
@@ -141,20 +235,20 @@ func registerFPLV2(code []string) string {
 func sendDataToSpreadSheet(code []string, timestamp string) bool {
 	b, err := ioutil.ReadFile("credentials.json")
 	if err != nil {
-		println(err)
+		fmt.Println(err)
 		return false
 	}
 
 	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
 	if err != nil {
-		println(err)
+		fmt.Println(err)
 		return false
 	}
 	client := getClient(config)
 
 	srv, err := sheets.New(client)
 	if err != nil {
-		println(err)
+		fmt.Println(err)
 		return false
 	}
 
@@ -163,7 +257,7 @@ func sendDataToSpreadSheet(code []string, timestamp string) bool {
 	readRange := "Sheet1!A1:A"
 	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
 	if err != nil {
-		println(err)
+		fmt.Println(err)
 		return false
 	}
 
