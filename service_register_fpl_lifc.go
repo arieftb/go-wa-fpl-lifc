@@ -54,7 +54,14 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 		return
 	}
 
+	remoteID := strings.Split(message.Info.RemoteJid, "@")
 	code := strings.Split(message.Text, "#")
+
+	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") && !strings.Contains(remoteID[1], "g") {
+		errorMessage := getErrorMessageV2(1002)
+		sendMessageV2(message, errorMessage, wh.wac)
+		return
+	}
 
 	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") {
 		messageSent := registerFPLV2(code)
@@ -62,6 +69,19 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 	} else {
 		return
 	}
+}
+
+func getErrorMessageV2(code int) string {
+	var msg string
+
+	switch errorCode := code; errorCode {
+	case 1001:
+		msg = "Kesalahan Format Penulisan Pendaftaran. Mohon Ulangi."
+	case 1002:
+		msg = "Melakukan pendaftaran hanya bisa dilakukan di grup, silahkan kunjungi grup https://s.id/fpllifc . \n\nSalam,\n\n\nLIFCia"
+	}
+
+	return msg
 }
 
 func getErrorMessage(code int, message whatsapp.TextMessage) whatsapp.TextMessage {
