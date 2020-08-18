@@ -176,6 +176,25 @@ func registerFPL(code []string, message whatsapp.TextMessage) whatsapp.TextMessa
 	return msg
 }
 
+func registerFPLV2(code []string) string {
+	isSent := sendDataToSpreadSheet(code, time.Now().Format("01-02-2006 15:04:05"))
+
+	if !isSent {
+		msg := "UNSUCCESSFUL REGISTERED\nOfficial LIFC Classic League Team: " +
+				code[3] + ",\nOfficial LIFC H2H League Team: " +
+				code[4] + ",\nFrom: " +
+				code[2] + "\n\nThis message sent by LIFCia" +
+				"\nPlease contact the owner of LIFCia",
+	} else {
+		msg := "Registered\nOfficial LIFC Classic League Team: " +
+				code[3] + ",\nOfficial LIFC H2H League Team: " +
+				code[4] + ",\nFrom: " +
+				code[2] + "\n\nThis message sent by LIFCia",
+	}
+
+	return msg
+}
+
 func sendDataToSpreadSheet(code []string, timestamp string) bool {
 	b, err := ioutil.ReadFile("credentials.json")
 	if err != nil {
