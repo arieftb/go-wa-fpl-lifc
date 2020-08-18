@@ -62,8 +62,11 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 	// }
 
 	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") {
-		sendMessages = registerFPL(code, message)
-		sendMessage(sendMessages, wh.wac)
+		// sendMessages = registerFPL(code, message)
+		// sendMessage(sendMessages, wh.wac)
+
+		messageSent := registerFPLV2(code)
+		sendMessageV2(message, messageSent, wh.wac)
 	} else {
 		return
 	}
@@ -177,19 +180,20 @@ func registerFPL(code []string, message whatsapp.TextMessage) whatsapp.TextMessa
 }
 
 func registerFPLV2(code []string) string {
+	var msg string
 	isSent := sendDataToSpreadSheet(code, time.Now().Format("01-02-2006 15:04:05"))
 
 	if !isSent {
-		msg := "UNSUCCESSFUL REGISTERED\nOfficial LIFC Classic League Team: " +
+		msg = "UNSUCCESSFUL REGISTERED\nOfficial LIFC Classic League Team: " +
 				code[3] + ",\nOfficial LIFC H2H League Team: " +
 				code[4] + ",\nFrom: " +
 				code[2] + "\n\nThis message sent by LIFCia" +
-				"\nPlease contact the owner of LIFCia",
+				"\nPlease contact the owner of LIFCia"
 	} else {
-		msg := "Registered\nOfficial LIFC Classic League Team: " +
+		msg = "Registered\nOfficial LIFC Classic League Team: " +
 				code[3] + ",\nOfficial LIFC H2H League Team: " +
 				code[4] + ",\nFrom: " +
-				code[2] + "\n\nThis message sent by LIFCia",
+				code[2] + "\n\nThis message sent by LIFCia"
 	}
 
 	return msg
@@ -215,7 +219,7 @@ func sendDataToSpreadSheet(code []string, timestamp string) bool {
 		return false
 	}
 
-	spreadsheetID := "14jSm_V2HakndwIZDDgXd3AjA5iD5qM2BVzOmNQvyyfk"
+	spreadsheetID := "1hxjwncIybtnIrDUbd3_NL6_6MdvaDC1L58gBWdux9sY"
 	i := 0
 	readRange := "Sheet1!A1:A"
 	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
