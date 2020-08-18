@@ -54,8 +54,8 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 		return
 	}
 
-	remoteID := strings.Split(message.Info.RemoteJid, "@")
 	code := strings.Split(message.Text, "#")
+	remoteID := strings.Split(message.Info.RemoteJid, "@")
 
 	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") && !strings.Contains(remoteID[1], "g") {
 		errorMessage := getErrorMessageV2(1002)
@@ -118,6 +118,15 @@ func getErrorMessage(code int, message whatsapp.TextMessage) whatsapp.TextMessag
 }
 
 func sendMessageV2(messageReceived whatsapp.TextMessage, messageSent string, wac *whatsapp.Conn) {
+	var participant string
+	var number string
+	remoteID := strings.Split(messageReceived.Info.RemoteJid, "@")
+
+	if strings.Contains(remoteID[1], "g") {
+		number = strings.Split(messageReceived.Info.RemoteJid, "-")[0]
+		participant = number + "@s.whatsapp.net"
+	}
+
 	previousMessage := messageReceived.Text
 	quotedMessage := proto.Message{
 		Conversation: &previousMessage,
@@ -126,7 +135,7 @@ func sendMessageV2(messageReceived whatsapp.TextMessage, messageSent string, wac
 	ContextInfo := whatsapp.ContextInfo{
 		QuotedMessage:   &quotedMessage,
 		QuotedMessageID: messageReceived.Info.Id,
-		Participant:     messageReceived.Info.RemoteJid,
+		Participant:     participant,
 	}
 
 	msg := whatsapp.TextMessage{
