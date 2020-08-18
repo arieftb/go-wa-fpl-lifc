@@ -254,7 +254,7 @@ func sendDataToSpreadSheet(code []string, timestamp string) bool {
 
 	spreadsheetID := "1hxjwncIybtnIrDUbd3_NL6_6MdvaDC1L58gBWdux9sY"
 	i := 0
-	readRange := "Sheet1!A1:A"
+	readRange := "Sheet1!A1:D"
 	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
 	if err != nil {
 		fmt.Println(err)
@@ -266,10 +266,15 @@ func sendDataToSpreadSheet(code []string, timestamp string) bool {
 	} else {
 		for _, row := range resp.Values {
 			if row[0] == "" {
+				i++
 				// fmt.Printf("%d\n", i)
 				break
 			} else {
-				i++
+				if row[1] == code[2] {
+					break
+				} else {
+					i++
+				}
 				// fmt.Printf("%d\n", i)
 				// fmt.Printf("%s\n", row[0])
 			}
