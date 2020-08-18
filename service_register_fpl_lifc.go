@@ -73,7 +73,7 @@ func getErrorMessage(code int, message whatsapp.TextMessage) whatsapp.TextMessag
 	var mes string
 
 	switch errorCode := code; errorCode {
-	case 1:
+	case 1001:
 		mes = "Kesalahan Format Penulisan Pendaftaran. Mohon Ulangi."
 	}
 
@@ -103,6 +103,31 @@ func getErrorMessage(code int, message whatsapp.TextMessage) whatsapp.TextMessag
 
 func sendMessage(sendMessage whatsapp.TextMessage, wac *whatsapp.Conn) {
 	if _, err := wac.Send(sendMessage); err != nil {
+		fmt.Fprintf(os.Stderr, "error sending message: %v\n", err)
+	}
+}
+
+func sendMessageV2(messageReceived whatsapp.TextMessage, messageSent string, wac *whatsapp.Conn) {
+	previousMessage := messageReceived.Text
+	quotedMessage := proto.Message{
+		Conversation: &previousMessage,
+	}
+
+	ContextInfo := whatsapp.ContextInfo{
+		QuotedMessage:   &quotedMessage,
+		QuotedMessageID: messageReceived.Info.Id,
+		Participant:     messageReceived.Info.RemoteJid,
+	}
+
+	msg := whatsapp.TextMessage{
+		Info: whatsapp.MessageInfo{
+			RemoteJid: messageReceived.Info.RemoteJid,
+		},
+		ContextInfo: ContextInfo,
+		Text:        messageSent,
+	}
+
+	if _, err := wac.Send(msg); err != nil {
 		fmt.Fprintf(os.Stderr, "error sending message: %v\n", err)
 	}
 }
@@ -158,7 +183,6 @@ func sendDataToSpreadSheet(code []string, timestamp string) bool {
 		return false
 	}
 
-	// If modifying these scopes, delete your previously saved token.json.
 	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
 	if err != nil {
 		println(err)
@@ -172,8 +196,6 @@ func sendDataToSpreadSheet(code []string, timestamp string) bool {
 		return false
 	}
 
-	// Prints the names and majors of students in a sample spreadsheet:
-	// https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
 	spreadsheetID := "14jSm_V2HakndwIZDDgXd3AjA5iD5qM2BVzOmNQvyyfk"
 	i := 0
 	readRange := "Sheet1!A1:A"
@@ -215,14 +237,9 @@ func sendDataToSpreadSheet(code []string, timestamp string) bool {
 	}
 	fmt.Println("Done.")
 	return true
-
 }
 
-// Retrieve a token, saves the token, then returns the generated client.
 func getClient(config *oauth2.Config) *http.Client {
-	// The file token.json stores the user's access and refresh tokens, and is
-	// created automatically when the authorization flow completes for the first
-	// time.
 	tokFile := "token.json"
 	tok, err := tokenFromFile(tokFile)
 	if err != nil {
