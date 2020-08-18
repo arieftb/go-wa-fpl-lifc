@@ -10,7 +10,7 @@ Service for handling FPL (Fantasy Premier League) registration message from memb
 * [GO](https://golang.org/)
 * [go-whatsapp](https://github.com/Rhymen/go-whatsapp) by Rhymen
 * [qrcode-terminal-go](https://github.com/Baozisoftware/qrcode-terminal-go) by Baozisoftware
-* [Google Sheet API V4 For Go Documentation](https://developers.google.com/sheets/api/quickstart/go)
+* [Google Sheet API V4 For Go](https://developers.google.com/sheets/api/quickstart/go)
 
 <!-- CONTACT -->
 ## Contact

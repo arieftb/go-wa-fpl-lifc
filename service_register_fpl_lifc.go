@@ -136,12 +136,12 @@ func checkRegisterFPL(phone string) string {
 
 	if isRegistered {
 		msg = "Anda telah terdaftar, \n" +
-			"\nOfficial LIFC Classic League : " + row[2].(string) +
-			"\nOfficial LIFC H2H League : " + row[3].(string) +
-			"\nWA Number : " + row[1].(string) +
-			"\n\n\nThis message sent by LIFCia"
+			"\nOfficial LIFC Classic League Team : " + row[2].(string) +
+			"\nOfficial LIFC H2H League Team : " + row[3].(string) +
+			"\nKontak : " + row[1].(string) +
+			"\n\n\nPesan dikirim oleh LIFCia"
 	} else if !isRegistered && err == nil {
-		msg = "Anda belum terdaftar, silahkan lakukan pendaftaran dengan format seperti yang ada di deskripsi grup ini. \n\nThis message sent by LIFCia"
+		msg = "Anda belum terdaftar, silahkan lakukan pendaftaran dengan format seperti yang ada di deskripsi grup ini. \n\nPesan dikirim oleh LIFCia"
 	}
 
 	return msg
@@ -216,16 +216,16 @@ func registerFPLV2(code []string) string {
 	isSent := sendDataToSpreadSheet(code, time.Now().Format("01-02-2006 15:04:05"))
 
 	if !isSent {
-		msg = "UNSUCCESSFUL REGISTERED\nOfficial LIFC Classic League Team: " +
+		msg = "Gagal melakukan pendaftaran\n\nOfficial LIFC Classic League Team: " +
 			code[3] + ",\nOfficial LIFC H2H League Team: " +
-			code[4] + ",\nFrom: " +
-			code[2] + "\n\nThis message sent by LIFCia" +
-			"\nPlease contact the owner of LIFCia"
+			code[4] + ",\nKontak: " +
+			code[2] + "\n\nPesan dikirim oleh LIFCia" +
+			"\nTolong beritahu rekan LIFCia ya, terimakasih"
 	} else {
-		msg = "Registered\nOfficial LIFC Classic League Team: " +
+		msg = "Berhasil melakukan pendaftaran\n\nOfficial LIFC Classic League Team: " +
 			code[3] + ",\nOfficial LIFC H2H League Team: " +
-			code[4] + ",\nFrom: " +
-			code[2] + "\n\nThis message sent by LIFCia"
+			code[4] + ",\nKontak: " +
+			code[2] + "\n\nTerimakasih\nPesan dikirim oleh LIFCia"
 	}
 
 	return msg
