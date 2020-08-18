@@ -84,39 +84,6 @@ func getErrorMessageV2(code int) string {
 	return msg
 }
 
-func getErrorMessage(code int, message whatsapp.TextMessage) whatsapp.TextMessage {
-	var mes string
-
-	switch errorCode := code; errorCode {
-	case 1001:
-		mes = "Kesalahan Format Penulisan Pendaftaran. Mohon Ulangi."
-	}
-
-	previousMessage := message.Text
-	quotedMessage := proto.Message{
-		Conversation: &previousMessage,
-	}
-
-	ContextInfo := whatsapp.ContextInfo{
-		QuotedMessage:   &quotedMessage,
-		QuotedMessageID: message.Info.Id,
-		// MentionedJid: "081510837507@s.whatsapp.net",
-		Participant: "6281510837507@s.whatsapp.net",
-	}
-
-	var msg whatsapp.TextMessage
-
-	msg = whatsapp.TextMessage{
-		Info: whatsapp.MessageInfo{
-			RemoteJid: "6281510837507@s.whatsapp.net",
-		},
-		ContextInfo: ContextInfo,
-		Text:        mes + "\n\nThis message sent by LIFCia @081510837507",
-	}
-
-	return msg
-}
-
 func sendMessageV2(messageReceived whatsapp.TextMessage, messageSent string, wac *whatsapp.Conn) {
 	var participant string
 	var number string
