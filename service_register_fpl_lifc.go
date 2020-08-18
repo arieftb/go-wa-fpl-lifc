@@ -59,13 +59,13 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 
 	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") && !strings.Contains(remoteID[1], "g") {
 		errorMessage := getErrorMessageV2(1002)
-		sendMessageV2(message, errorMessage, wh.wac)
+		sendMessageV2(message, errorMessage, wh.wac, nil)
 		return
 	}
 
 	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") {
 		messageSent := registerFPLV2(code)
-		sendMessageV2(message, messageSent, wh.wac)
+		sendMessageV2(message, messageSent, wh.wac, nil)
 	} else {
 		return
 	}
@@ -84,14 +84,14 @@ func getErrorMessageV2(code int) string {
 	return msg
 }
 
-func sendMessageV2(messageReceived whatsapp.TextMessage, messageSent string, wac *whatsapp.Conn) {
+func sendMessageV2(messageReceived whatsapp.TextMessage, messageSent string, wac *whatsapp.Conn, code []string) {
 	var participant string
-	var number string
 	remoteID := strings.Split(messageReceived.Info.RemoteJid, "@")
 
-	if strings.Contains(remoteID[1], "g") {
-		number = strings.Split(messageReceived.Info.RemoteJid, "-")[0]
-		participant = number + "@s.whatsapp.net"
+	if strings.Contains(remoteID[1], "g") && code != nil {
+		participant = code[2] + "@s.whatsapp.net"
+	} else {
+		participant = messageReceived.Info.RemoteJid
 	}
 
 	previousMessage := messageReceived.Text
