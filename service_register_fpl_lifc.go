@@ -48,7 +48,6 @@ func (wh *waHandler) HandleError(err error) {
 }
 
 func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
-	// var sendMessages whatsapp.TextMessage
 	// fmt.Printf("time:\t%v\nmesId:\t%v\nremoteId:\t%v\nquoteMessageId:\t%v\nsenderId:\t%v\nmessage:\t%v\n", message.Info.Timestamp, message.Info.Id, message.Info.RemoteJid, message.ContextInfo.QuotedMessageID, message.Info.SenderJid, message.Text)
 	if !strings.Contains(strings.ToLower(message.Text), "#fpllifc#") || strings.Contains(strings.ToLower(message.Text), "<") || strings.Contains(strings.ToLower(message.Text), ">") || message.Info.Timestamp < wh.startTime {
 		return
