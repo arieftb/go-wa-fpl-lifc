@@ -139,9 +139,9 @@ func checkRegisterFPL(phone string) string {
 			"\nOfficial LIFC Classic League Team : " + row[2].(string) +
 			"\nOfficial LIFC H2H League Team : " + row[3].(string) +
 			"\nKontak : " + row[1].(string) +
-			"\n\n\nPesan dikirim oleh LIFCia"
+			"\n\n\nPesan dikirim oleh LIFCia 😊"
 	} else if !isRegistered && err == nil {
-		msg = "Anda belum terdaftar, silahkan lakukan pendaftaran dengan format seperti yang ada di deskripsi grup ini. \n\nPesan dikirim oleh LIFCia"
+		msg = "Manager dengan Nomor WA "+ phone +" belum mendaftarkan tim nya, silahkan lakukan pendaftaran dengan format seperti yang ada di deskripsi grup ini. \n\nPesan dikirim oleh LIFCia 😊"
 	}
 
 	return msg
@@ -193,7 +193,7 @@ func isRegisteredInSheet(phone string) (bool, []interface{}, error) {
 		fmt.Println("No data found.")
 	} else {
 		for _, row := range resp.Values {
-			fmt.Println(row[1])
+			// fmt.Println(row[1])
 			if row[1] == phone {
 				isRegistered = true
 				rowData = row
@@ -220,12 +220,12 @@ func registerFPLV2(code []string) string {
 			code[3] + ",\nOfficial LIFC H2H League Team: " +
 			code[4] + ",\nKontak: " +
 			code[2] + "\n\nPesan dikirim oleh LIFCia" +
-			"\nTolong beritahu rekan LIFCia ya, terimakasih"
+			"\nTolong beritahu rekan LIFCia ya, terimakasih 😊"
 	} else {
 		msg = "Berhasil melakukan pendaftaran\n\nOfficial LIFC Classic League Team: " +
 			code[3] + ",\nOfficial LIFC H2H League Team: " +
 			code[4] + ",\nKontak: " +
-			code[2] + "\n\nTerimakasih\nPesan dikirim oleh LIFCia"
+			code[2] + "\n\nTerimakasih\nPesan dikirim oleh LIFCia 😊"
 	}
 
 	return msg
