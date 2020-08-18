@@ -22,7 +22,7 @@ Arief Turbagus - [@arieftb22](https://twitter.com/arueftb22) - arieftb22@gmail.c
 * [botWhatsappCovid](https://github.com/dickysuryos/botWhatsappCovid) by dickysuryos
 * [Google Sheet API V4](https://developers.google.com/sheets/api/quickstart/go) For Go
 * [Go Tutorials](https://www.tutorialspoint.com/go/) by Tutorialspoint
-* [LIFC](https://www.facebook.com/groups/liverpoolindonesiafansclub) (Liverpool Indonesia Fans Club))
+* [LIFC](https://www.facebook.com/groups/liverpoolindonesiafansclub) (Liverpool Indonesia Fans Club)
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
