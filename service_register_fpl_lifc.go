@@ -48,23 +48,15 @@ func (wh *waHandler) HandleError(err error) {
 }
 
 func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
-	var sendMessages whatsapp.TextMessage
-	// fmt.Printf("time:\t%v\nmesId:\t%v\nremoteId:\t%v\nquoteMessageId:\t%v\nsenderId:\t%v\nmessage:\t%v\n", message.Info.Timestamp, message.Info.Id, message.Info.RemoteJid, message.ContextInfo.QuotedMessageID, message.Info.SenderJid, message.Text)
+	// var sendMessages whatsapp.TextMessage
+	fmt.Printf("time:\t%v\nmesId:\t%v\nremoteId:\t%v\nquoteMessageId:\t%v\nsenderId:\t%v\nmessage:\t%v\n", message.Info.Timestamp, message.Info.Id, message.Info.RemoteJid, message.ContextInfo.QuotedMessageID, message.Info.SenderJid, message.Text)
 	if !strings.Contains(strings.ToLower(message.Text), "#fpllifc#") || strings.Contains(strings.ToLower(message.Text), "<") || strings.Contains(strings.ToLower(message.Text), ">") || message.Info.Timestamp < wh.startTime {
 		return
 	}
 
 	code := strings.Split(message.Text, "#")
 
-	// if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") && (strings.Contains(strings.ToLower(message.Text), "<") || strings.Contains(strings.ToLower(message.Text), ">")) {
-	// 	sendMessages = getErrorMessage(1, message)
-	// 	return
-	// }
-
 	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") {
-		// sendMessages = registerFPL(code, message)
-		// sendMessage(sendMessages, wh.wac)
-
 		messageSent := registerFPLV2(code)
 		sendMessageV2(message, messageSent, wh.wac)
 	} else {
@@ -88,26 +80,21 @@ func getErrorMessage(code int, message whatsapp.TextMessage) whatsapp.TextMessag
 	ContextInfo := whatsapp.ContextInfo{
 		QuotedMessage:   &quotedMessage,
 		QuotedMessageID: message.Info.Id,
-		Participant:     message.Info.RemoteJid,
+		// MentionedJid: "081510837507@s.whatsapp.net",
+		Participant: "6281510837507@s.whatsapp.net",
 	}
 
 	var msg whatsapp.TextMessage
 
 	msg = whatsapp.TextMessage{
 		Info: whatsapp.MessageInfo{
-			RemoteJid: message.Info.RemoteJid,
+			RemoteJid: "6281510837507@s.whatsapp.net",
 		},
 		ContextInfo: ContextInfo,
-		Text:        mes + "\n\nThis message sent by LIFCia",
+		Text:        mes + "\n\nThis message sent by LIFCia @081510837507",
 	}
 
 	return msg
-}
-
-func sendMessage(sendMessage whatsapp.TextMessage, wac *whatsapp.Conn) {
-	if _, err := wac.Send(sendMessage); err != nil {
-		fmt.Fprintf(os.Stderr, "error sending message: %v\n", err)
-	}
 }
 
 func sendMessageV2(messageReceived whatsapp.TextMessage, messageSent string, wac *whatsapp.Conn) {
@@ -135,65 +122,21 @@ func sendMessageV2(messageReceived whatsapp.TextMessage, messageSent string, wac
 	}
 }
 
-func registerFPL(code []string, message whatsapp.TextMessage) whatsapp.TextMessage {
-	isSent := sendDataToSpreadSheet(code, time.Now().Format("01-02-2006 15:04:05"))
-
-	previousMessage := message.Text
-	quotedMessage := proto.Message{
-		Conversation: &previousMessage,
-	}
-
-	ContextInfo := whatsapp.ContextInfo{
-		QuotedMessage:   &quotedMessage,
-		QuotedMessageID: message.Info.Id,
-		Participant:     message.Info.RemoteJid,
-	}
-
-	var msg whatsapp.TextMessage
-
-	if !isSent {
-		msg = whatsapp.TextMessage{
-			Info: whatsapp.MessageInfo{
-				RemoteJid: message.Info.RemoteJid,
-			},
-			ContextInfo: ContextInfo,
-			Text: "UNSUCCESSFUL REGISTERED\nOfficial LIFC Classic League Team: " +
-				code[3] + ",\nOfficial LIFC H2H League Team: " +
-				code[4] + ",\nFrom: " +
-				code[2] + "\n\nThis message sent by LIFCia" +
-				"\nPlease contact the owner of LIFCia",
-		}
-	} else {
-		msg = whatsapp.TextMessage{
-			Info: whatsapp.MessageInfo{
-				RemoteJid: message.Info.RemoteJid,
-			},
-			ContextInfo: ContextInfo,
-			Text: "Registered\nOfficial LIFC Classic League Team: " +
-				code[3] + ",\nOfficial LIFC H2H League Team: " +
-				code[4] + ",\nFrom: " +
-				code[2] + "\n\nThis message sent by LIFCia",
-		}
-	}
-
-	return msg
-}
-
 func registerFPLV2(code []string) string {
 	var msg string
 	isSent := sendDataToSpreadSheet(code, time.Now().Format("01-02-2006 15:04:05"))
 
 	if !isSent {
 		msg = "UNSUCCESSFUL REGISTERED\nOfficial LIFC Classic League Team: " +
-				code[3] + ",\nOfficial LIFC H2H League Team: " +
-				code[4] + ",\nFrom: " +
-				code[2] + "\n\nThis message sent by LIFCia" +
-				"\nPlease contact the owner of LIFCia"
+			code[3] + ",\nOfficial LIFC H2H League Team: " +
+			code[4] + ",\nFrom: " +
+			code[2] + "\n\nThis message sent by LIFCia" +
+			"\nPlease contact the owner of LIFCia"
 	} else {
 		msg = "Registered\nOfficial LIFC Classic League Team: " +
-				code[3] + ",\nOfficial LIFC H2H League Team: " +
-				code[4] + ",\nFrom: " +
-				code[2] + "\n\nThis message sent by LIFCia"
+			code[3] + ",\nOfficial LIFC H2H League Team: " +
+			code[4] + ",\nFrom: " +
+			code[2] + "\n\nThis message sent by LIFCia"
 	}
 
 	return msg
