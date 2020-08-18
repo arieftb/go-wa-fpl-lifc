@@ -78,7 +78,7 @@ func getErrorMessageV2(code int) string {
 	case 1001:
 		msg = "Kesalahan Format Penulisan Pendaftaran. Mohon Ulangi."
 	case 1002:
-		msg = "Melakukan pendaftaran hanya bisa dilakukan di grup, silahkan kunjungi grup https://s.id/fpllifc . \n\nSalam,\n\n\nLIFCia"
+		msg = "Melakukan pendaftaran FPLLIFC2020/2021 hanya bisa dilakukan di grup, silahkan kunjungi grup https://s.id/fpllifc . \n\nSalam,\n\n\nLIFCia"
 	}
 
 	return msg
