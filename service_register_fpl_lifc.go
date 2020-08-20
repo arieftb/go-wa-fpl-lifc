@@ -104,9 +104,9 @@ func getErrorMessageV2(code int) string {
 	case 1002:
 		msg = "Melakukan pendaftaran FPLLIFC2020/2021 hanya bisa dilakukan di grup, silahkan kunjungi grup https://s.id/fpllifc . \n\nSalam,\n\n\nLIFCia"
 	case 1003:
-		msg = "Nomor WA yang ingin didaftarkan tidak sesuai format"
+		msg = "Nomor WA yang ingin didaftarkan tidak sesuai format\n\nPesan dikirim oleh LIFCia 😊"
 	case 1004:
-		msg = "Nomor WA yang ingin dicek tidak sesuai format"
+		msg = "Nomor WA yang ingin dicek tidak sesuai format \n\nPesan dikirim oleh LIFCia 😊"
 	}
 
 	return msg
@@ -234,7 +234,7 @@ func isRegisteredInSheet(phone string) (bool, []interface{}, error) {
 }
 
 func isPhoneNumber(phone string) bool {
-	isPhoneNumber := regexp.MustCompile(`^[+]*[0-9].{9,20}$`).MatchString
+	isPhoneNumber := regexp.MustCompile(`^[+]*[0-9]{9,20}$`).MatchString
 	return isPhoneNumber(phone)
 }
 
@@ -440,14 +440,14 @@ func login(wac *whatsapp.Conn) error {
 		}()
 		session, err = wac.Login(qr)
 		if err != nil {
-			return fmt.Errorf("error during login: %v\n", err)
+			return fmt.Errorf("error during login: %v", err)
 		}
 	}
 
 	//save session
 	err = writeSession(session)
 	if err != nil {
-		return fmt.Errorf("error saving session: %v\n", err)
+		return fmt.Errorf("error saving session: %v", err)
 	}
 	return nil
 }
