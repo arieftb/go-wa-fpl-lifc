@@ -56,16 +56,16 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 	code := strings.Split(message.Text, "#")
 	remoteID := strings.Split(message.Info.RemoteJid, "@")
 
-	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") && !strings.Contains(remoteID[1], "g") {
+	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") && !strings.Contains(remoteID[1], "g") && message.Info.Timestamp > wh.startTime {
 		errorMessage := getErrorMessageV2(1002)
 		sendMessageV2(message, errorMessage, wh.wac, nil)
 		return
 	}
 
-	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") {
+	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") && message.Info.Timestamp > wh.startTime {
 		messageSent := registerFPLV2(code)
 		sendMessageV2(message, messageSent, wh.wac, nil)
-	} else if len(code) == 3 && strings.EqualFold(code[0], "CHECK") && strings.EqualFold(code[1], "FPLLIFC") {
+	} else if len(code) == 3 && strings.EqualFold(code[0], "CHECK") && strings.EqualFold(code[1], "FPLLIFC") && message.Info.Timestamp > wh.startTime {
 		messageSent := checkRegisterFPL(code[2])
 
 		fmt.Println(messageSent)
@@ -141,7 +141,7 @@ func checkRegisterFPL(phone string) string {
 			"\nKontak : " + row[1].(string) +
 			"\n\n\nPesan dikirim oleh LIFCia 😊"
 	} else if !isRegistered && err == nil {
-		msg = "Manager dengan Nomor WA "+ phone +" belum mendaftarkan tim nya, silahkan lakukan pendaftaran dengan format seperti yang ada di deskripsi grup ini. \n\nPesan dikirim oleh LIFCia 😊"
+		msg = "Manager dengan Nomor WA " + phone + " belum mendaftarkan tim nya, silahkan lakukan pendaftaran dengan format seperti yang ada di deskripsi grup ini. \n\nPesan dikirim oleh LIFCia 😊"
 	}
 
 	return msg
@@ -200,6 +200,8 @@ func isRegisteredInSheet(phone string) (bool, []interface{}, error) {
 				break
 			} else {
 				if row[0] == "" {
+					rowData = nil
+					isRegistered = false
 					break
 				} else {
 					i++
@@ -400,7 +402,7 @@ func login(wac *whatsapp.Conn) error {
 		//restore session
 		session, err = wac.RestoreWithSession(session)
 		if err != nil {
-			return fmt.Errorf("restoring failed: %v\n", err)
+			return fmt.Errorf("restoring failed: %v", err)
 		}
 	} else {
 		//no saved session -> regular login
