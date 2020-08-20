@@ -10,6 +10,7 @@ import (
 
 	"encoding/json"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -63,12 +64,27 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 	}
 
 	if len(code) == 5 && strings.EqualFold(code[0], "REG") && strings.EqualFold(code[1], "FPLLIFC") && message.Info.Timestamp > wh.startTime {
-		messageSent := registerFPLV2(code)
+		isPhoneNumber := isPhoneNumber(code[2])
+
+		var messageSent string
+		if isPhoneNumber {
+			messageSent = registerFPLV2(code)
+		} else {
+			messageSent = getErrorMessageV2(1003)
+		}
+
 		sendMessageV2(message, messageSent, wh.wac, nil)
 	} else if len(code) == 3 && strings.EqualFold(code[0], "CHECK") && strings.EqualFold(code[1], "FPLLIFC") && message.Info.Timestamp > wh.startTime {
-		messageSent := checkRegisterFPL(code[2])
+		isPhoneNumber := isPhoneNumber(code[2])
 
-		// fmt.Println(messageSent)
+		var messageSent string
+		if isPhoneNumber {
+			messageSent = checkRegisterFPL(code[2])
+			// fmt.Println(messageSent)
+		} else {
+			messageSent = getErrorMessageV2(1004)
+		}
+
 		if messageSent == "" {
 			return
 		}
@@ -87,6 +103,10 @@ func getErrorMessageV2(code int) string {
 		msg = "Kesalahan Format Penulisan Pendaftaran. Mohon Ulangi."
 	case 1002:
 		msg = "Melakukan pendaftaran FPLLIFC2020/2021 hanya bisa dilakukan di grup, silahkan kunjungi grup https://s.id/fpllifc . \n\nSalam,\n\n\nLIFCia"
+	case 1003:
+		msg = "Nomor WA yang ingin didaftarkan tidak sesuai format"
+	case 1004:
+		msg = "Nomor WA yang ingin dicek tidak sesuai format"
 	}
 
 	return msg
@@ -211,6 +231,11 @@ func isRegisteredInSheet(phone string) (bool, []interface{}, error) {
 	}
 
 	return isRegistered, rowData, nil
+}
+
+func isPhoneNumber(phone string) bool {
+	isPhoneNumber := regexp.MustCompile(`^[+]*[0-9].{9,20}$`).MatchString
+	return isPhoneNumber(phone)
 }
 
 func registerFPLV2(code []string) string {
