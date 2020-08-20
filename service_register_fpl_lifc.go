@@ -68,7 +68,7 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 	} else if len(code) == 3 && strings.EqualFold(code[0], "CHECK") && strings.EqualFold(code[1], "FPLLIFC") && message.Info.Timestamp > wh.startTime {
 		messageSent := checkRegisterFPL(code[2])
 
-		fmt.Println(messageSent)
+		// fmt.Println(messageSent)
 		if messageSent == "" {
 			return
 		}
