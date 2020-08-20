@@ -32,6 +32,9 @@ type waHandler struct {
 	startTime uint64
 }
 
+// SHEETIDFPL FOR FPL
+const SHEETIDFPL = "1hxjwncIybtnIrDUbd3_NL6_6MdvaDC1L58gBWdux9sY"
+
 func (wh *waHandler) HandleError(err error) {
 
 	if e, ok := err.(*whatsapp.ErrConnectionFailed); ok {
@@ -196,7 +199,7 @@ func isRegisteredInSheet(phone string) (bool, []interface{}, error) {
 		// return false
 	}
 
-	spreadsheetID := "1hxjwncIybtnIrDUbd3_NL6_6MdvaDC1L58gBWdux9sY"
+	spreadsheetID := SHEETIDFPL
 	i := 0
 	readRange := "Sheet1!A1:D"
 	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
@@ -278,7 +281,7 @@ func sendDataToSpreadSheet(code []string, timestamp string) bool {
 		return false
 	}
 
-	spreadsheetID := "1hxjwncIybtnIrDUbd3_NL6_6MdvaDC1L58gBWdux9sY"
+	spreadsheetID := SHEETIDFPL
 	i := 0
 	readRange := "Sheet1!A1:D"
 	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
